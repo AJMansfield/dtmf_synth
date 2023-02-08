@@ -25,7 +25,7 @@ class FloatNotePlayer:
         yield mido.Message('control_change', channel=self.channel, control=0x64, value=lo) # 0x64 = control for 'RPN lo byte'
         yield mido.Message('control_change', channel=self.channel, control=0x65, value=hi) # 0x65 = control for 'RPN hi byte'
     
-    def set_rpn_value(self, param_value: int | tuple(int,int|None)):
+    def set_rpn_value(self, param_value: int | tuple[int, int|None]):
         try:
             hi, lo = param_value
         except TypeError:
@@ -38,7 +38,7 @@ class FloatNotePlayer:
         if lo is not None:
             yield mido.Message('control_change', channel=self.channel, control=0x26, value=lo) # 0x26 = control for 'Data Entry (Fine)'
 
-    def set_rpn(self, param_num: int, param_value: int | tuple(int,int|None)):
+    def set_rpn(self, param_num: int, param_value: int | tuple[int, int|None]):
         yield from self.address_rpn(param_num)
         yield from self.set_rpn_value(param_value)
         yield from self.address_rpn(0x3fff) # 0x3fff = "end of controller sequence"
