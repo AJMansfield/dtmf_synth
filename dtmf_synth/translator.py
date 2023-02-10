@@ -1,10 +1,10 @@
 
 from __future__ import annotations
 from typing import TypeVar
-from tone import *
 import numpy as np
 import itertools
-from phone_chords import dtmf
+from .tone import *
+from .phone_chords import dtmf
 # Given: a "main" input note, and "chord" input notes
 # - pick the DTMF tone pair that is optimal over a cost function that considers:
 #   - distance from the main input note to one of the pair

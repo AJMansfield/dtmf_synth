@@ -4,7 +4,7 @@ import mido
 import math
 from dataclasses import dataclass
 
-from .lerp import remap
+from .util import remap
 
 @dataclass
 class FloatNotePlayer:
