@@ -76,7 +76,10 @@ class TonePlayer:
         fine = semitones - coarse
         yield from self.set_pitchbend(fine)
         self.current_coarse = coarse
-        yield mido.Message('note_on', channel=self.channel, note=coarse)
+        velocity = tone.meta.get('velocity', 64)
+        yield mido.Message('note_on', channel=self.channel, note=coarse, velocity=velocity)
+        if 'polytouch' in tone.meta:
+            yield mido.Message('polytouch', channel=self.channel, note=coarse, value=tone.meta['polytouch'])
     
     def note_off(self):
         if self.current_coarse is not None:
