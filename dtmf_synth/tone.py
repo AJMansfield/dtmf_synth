@@ -1,6 +1,7 @@
 from __future__ import annotations
 import dataclasses
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Any
 from operator import attrgetter
 import math
 import numbers
@@ -68,47 +69,60 @@ class NoteConversionDescriptor:
 
 @dataclass
 class Tone:
+
     freq: FreqConversionDescriptor = FreqConversionDescriptor()
     note: NoteConversionDescriptor = NoteConversionDescriptor()
     tuning: Tuning = TUNING_12ET_A440
+    meta: dict[str, Any] = field(default_factory=dict, metadata={'default_value':{}})
 
-    def __repr__(self): # skip default-valued fields, taken from https://stackoverflow.com/a/72161437/1324631
+    def __repr__(self): # skip default-valued fields, modified from https://stackoverflow.com/a/72161437/1324631
         nodef_f_vals = (
             (f.name, attrgetter(f.name)(self))
             for f in dataclasses.fields(self)
-            if attrgetter(f.name)(self) != f.default
+            if attrgetter(f.name)(self) != f.metadata.get('default_value', getattr(f, 'default', dataclasses.MISSING))
         )
         nodef_f_repr = ", ".join(f"{name}={value}" for name, value in nodef_f_vals)
         return f"{self.__class__.__name__}({nodef_f_repr})"
     
-    def __add__(self, other):
-        if isinstance(other, numbers.Real): 
-            return Tone(note=self.note + other)
+    def __add__(self, other: numbers.Real) -> Tone:
+        if isinstance(other, numbers.Real): # tone plus interval is another tone
+            return dataclasses.replace(self, note=self.note + other)
         else:
             return NotImplemented
     __radd__ = __add__
 
-    def __sub__(self, other):
-        if isinstance(other, numbers.Real):
+    def __sub__(self, other: Tone | numbers.Real) -> numbers.Real | Tone:
+        if isinstance(other, numbers.Real): # tone minus interval is another tone
             return self + (-other)
-        elif isinstance(other, Tone):
+        elif isinstance(other, Tone): # tone minus tone is interval
+            if self.tuning != other.tuning: return NotImplemented
             return self.note - other.note
         else:
             return NotImplemented
 
-    def __mul__(self, other):
-        if isinstance(other, numbers.Real):
-            return Tone(freq=self.freq * other)
-        else:
+    def __mul__(self, other: numbers.Real) -> Tone:
+        if isinstance(other, numbers.Real): # tone times tuning ratio is tone
+            return dataclasses.replace(self, freq=self.freq * other)
+        else: 
             return NotImplemented
+    __rmul__ = __mul__
     
-    def __truediv__(self, other):
-        if isinstance(other, numbers.Real):
-            return Tone(freq=self.freq / other)
-        elif isinstance(other, Tone):
+    def __truediv__(self, other: Tone | numbers.Real) -> numbers.Real | Tone:
+        if isinstance(other, numbers.Real): # tone divided by tuning ratio is tone
+            return dataclasses.replace(self, freq=self.freq / other)
+        elif isinstance(other, Tone): # tone / tone is the tuning ratio
             return self.freq / other.freq
         else:
             return NotImplemented
+    def __rtruediv__(self, other: Tone | numbers.Real) -> numbers.Real:
+        if isinstance(other, numbers.Real): # 1 / tone is the period in seconds
+            return other / self.freq
+        elif isinstance(other, Tone): # tone / tone is the tuning ratio
+            return other.freq / self.freq
+        else:
+            return NotImplemented
+
+
 
 
 
